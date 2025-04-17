@@ -38,6 +38,11 @@ jobs:
         git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
         echo "$PWD/depot_tools" >> $GITHUB_PATH
 
+    - name: Install Python dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        pip install mako
+        
     - name: Download & unpack Android NDK
       run: |
         wget https://dl.google.com/android/repository/android-ndk-${ANDROID_NDK_VERSION}-linux.zip
