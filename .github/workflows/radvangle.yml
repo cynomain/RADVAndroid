@@ -2,10 +2,7 @@
 name: Build RADV & ANGLE Shared Libraries for Android arm64
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch: {}
 
 jobs:
   build-android-arm64:
