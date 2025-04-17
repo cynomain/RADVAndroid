@@ -31,7 +31,7 @@ jobs:
     - name: Install build deps
       run: |
         sudo apt-get update
-        sudo apt-get install -y meson ninja-build ccache pkg-config lld python3 git curl unzip
+        sudo apt-get install -y meson ninja-build ccache pkg-config lld python3 git curl unzip glslang-tools                                      # provides glslangValidator 0
 
     - name: Install depot_tools
       run: |
