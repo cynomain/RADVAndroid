@@ -73,7 +73,7 @@ jobs:
           -Dplatform-sdk-version=${ANDROID_API} \
           -Dandroid-stub=true \
           -Dgallium-drivers= \
-          -Dvulkan-drivers=radv                                                  # only RADV driver :contentReference[oaicite:7]{index=7}
+          -Dvulkan-drivers=amd                                                  # only RADV driver :contentReference[oaicite:7]{index=7}
         meson compile -C build-android-aarch64                                    # outputs libvulkan_radeon.so :contentReference[oaicite:8]{index=8}
 
     - name: Build ANGLE shared libraries
