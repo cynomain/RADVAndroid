@@ -1,0 +1,84 @@
+# .github/workflows/build-radv-angle-android-arm64.yml
+name: Build RADV & ANGLE for Android arm64
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-android-arm64:
+    runs-on: ubuntu-latest                     # Use GitHub-hosted Ubuntu runner :contentReference[oaicite:0]{index=0}
+    env:
+      ANDROID_NDK_VERSION: r25                  # NDK version to download
+      ANDROID_API: 34                           # Android API level
+
+    steps:
+    - name: Checkout repos
+      uses: actions/checkout@v3
+
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y meson ninja-build       # Install Meson & Ninja :contentReference[oaicite:1]{index=1}
+        sudo apt-get install -y ccache                   # Install ccache :contentReference[oaicite:2]{index=2}
+        sudo apt-get install -y pkg-config               # Install pkg-config :contentReference[oaicite:3]{index=3}
+        sudo apt-get install -y lld                       # Install LLVM linker LLD :contentReference[oaicite:4]{index=4}
+
+    - name: Download & unpack Android NDK
+      run: |
+        wget https://dl.google.com/android/repository/android-ndk-${ANDROID_NDK_VERSION}-linux.zip   # Download NDK :contentReference[oaicite:5]{index=5}
+        unzip android-ndk-${ANDROID_NDK_VERSION}-linux.zip
+        mv android-ndk-${ANDROID_NDK_VERSION} $HOME/android-ndk
+
+    - name: Create Meson cross file
+      run: |
+        mkdir -p ~/.config/meson
+        cat > ~/.config/meson/android-aarch64.ini <<EOF
+        [binaries]
+        ar = '$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-ar'
+        c = ['ccache', '$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android${ANDROID_API}-clang']
+        cpp = ['ccache', '$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android${ANDROID_API}-clang++', '-fno-exceptions', '-static-libstdc++']
+        strip = '$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-strip'
+        pkg-config = ['env', 'PKG_CONFIG_LIBDIR=$HOME/android-ndk/pkgconfig', '/usr/bin/pkg-config']
+
+        [host_machine]
+        system = 'android'
+        cpu_family = 'aarch64'
+        cpu = 'armv8'
+        endian = 'little'
+        EOF
+
+    - name: Configure & build Mesa RADV
+      run: |
+        mkdir build-android-aarch64
+        meson setup build-android-aarch64 \
+          --cross-file ~/.config/meson/android-aarch64.ini \
+          -Dplatforms=android \
+          -Dplatform-sdk-version=${ANDROID_API} \
+          -Dandroid-stub=true \
+          -Dgallium-drivers= \
+          -Dvulkan-drivers=radv                                           # Meson setup for RADV :contentReference[oaicite:6]{index=6}
+        meson compile -C build-android-aarch64                               # Build RADV :contentReference[oaicite:7]{index=7}
+
+    - name: Checkout ANGLE
+      run: |
+        git clone --depth=1 https://github.com/google/angle.git
+        cd angle
+
+    - name: Configure & build ANGLE for Android arm64
+      working-directory: angle
+      run: |
+        # Bootstrap with GClient if needed (omitted here for brevity)
+        gn gen out/Android \
+          --args='target_os="android" target_cpu="arm64" angle_enable_vulkan=true is_component_build=false is_debug=false'
+        autoninja -C out/Android angle_apks                                    # Build ANGLE APK :contentReference[oaicite:8]{index=8}
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: android-drivers
+        path: |
+          build-android-aarch64      # RADV .so files
+          angle/out/Android/apks      # ANGLE APKs
