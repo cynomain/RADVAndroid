@@ -61,7 +61,7 @@ jobs:
         cpu_family = 'aarch64'
         cpu = 'armv8'
         endian = 'little'
-        EOF                                                                    # Meson cross‑file template :contentReference[oaicite:6]{index=6}
+                                                                            # Meson cross‑file template :contentReference[oaicite:6]{index=6}
 
     - name: Build RADV as single .so
       working-directory: mesa
