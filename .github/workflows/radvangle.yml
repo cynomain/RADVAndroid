@@ -2,48 +2,50 @@
 name: Build RADV & ANGLE Shared Libraries for Android arm64
 
 on:
-  workflow_dispatch: {}
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: {}    # allow manual dispatch
 
 jobs:
   build-android-arm64:
-    runs-on: ubuntu-latest                                                      # GitHub‑hosted Ubuntu runner :contentReference[oaicite:0]{index=0}
+    runs-on: ubuntu-latest
     env:
-      ANDROID_NDK_VERSION: r25                                                   # NDK version :contentReference[oaicite:1]{index=1}
-      ANDROID_API: 34                                                            # API level for clang wrappers
+      ANDROID_NDK_VERSION: r25
+      ANDROID_API: 34
 
     steps:
-    - name: Checkout Mesa & ANGLE
+    - name: Clone Mesa from GitLab
+      run: |
+        git clone https://gitlab.freedesktop.org/mesa/mesa.git mesa            # GitLab read‑only clone :contentReference[oaicite:1]{index=1}
+        cd mesa
+        git checkout main                                                 # ensure you’re on the correct branch :contentReference[oaicite:2]{index=2}
+
+    - name: Checkout ANGLE from GitHub
       uses: actions/checkout@v3
       with:
-        # Checkout Mesa into `mesa/`
-        repository: https://gitlab.freedesktop.org/mesa/
-        ref: main  
-        path: mesa
-    - name: Checkout ANGLE
-      uses: actions/checkout@v3
-      with:
-        # Checkout ANGLE into `angle/`
         repository: google/angle
-        ref: main  
         path: angle
+        ref: main
 
     - name: Install build dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y meson ninja-build ccache pkg-config lld python3 git curl unzip  # Meson, Ninja, ccache, pkg-config, LLD :contentReference[oaicite:2]{index=2}
+        sudo apt-get install -y meson ninja-build ccache pkg-config lld python3 git curl unzip  # Meson/Ninja/ccache/etc. :contentReference[oaicite:3]{index=3}
 
     - name: Install depot_tools
       run: |
         git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-        echo "$PWD/depot_tools" >> $GITHUB_PATH                                           # Required for ANGLE fetch & GN :contentReference[oaicite:3]{index=3}
+        echo "$PWD/depot_tools" >> $GITHUB_PATH                                     # for ANGLE GN build :contentReference[oaicite:4]{index=4}
 
     - name: Download & extract Android NDK
       run: |
-        wget https://dl.google.com/android/repository/android-ndk-${ANDROID_NDK_VERSION}-linux.zip   # Official NDK download URL :contentReference[oaicite:4]{index=4}
+        wget https://dl.google.com/android/repository/android-ndk-${ANDROID_NDK_VERSION}-linux.zip  # NDK download :contentReference[oaicite:5]{index=5}
         unzip android-ndk-${ANDROID_NDK_VERSION}-linux.zip -d $HOME
         echo "$HOME/android-ndk-${ANDROID_NDK_VERSION}" >> $GITHUB_PATH
 
-    - name: Create Meson cross-file for Android arm64
+    - name: Create Meson cross‑file for aarch64
       run: |
         mkdir -p ~/.config/meson
         cat > ~/.config/meson/android-aarch64.ini <<EOF
@@ -59,7 +61,7 @@ jobs:
         cpu_family = 'aarch64'
         cpu = 'armv8'
         endian = 'little'
-        EOF                                                                              # Meson cross‑file syntax :contentReference[oaicite:5]{index=5}
+        EOF                                                                    # Meson cross‑file template :contentReference[oaicite:6]{index=6}
 
     - name: Build RADV as single .so
       working-directory: mesa
@@ -71,21 +73,21 @@ jobs:
           -Dplatform-sdk-version=${ANDROID_API} \
           -Dandroid-stub=true \
           -Dgallium-drivers= \
-          -Dvulkan-drivers=radv                                                      # Build only RADV driver :contentReference[oaicite:6]{index=6}
-        meson compile -C build-android-aarch64                                            # Produces libvulkan_radeon.so :contentReference[oaicite:7]{index=7}
+          -Dvulkan-drivers=radv                                                  # only RADV driver :contentReference[oaicite:7]{index=7}
+        meson compile -C build-android-aarch64                                    # outputs libvulkan_radeon.so :contentReference[oaicite:8]{index=8}
 
     - name: Build ANGLE shared libraries
       working-directory: angle
       run: |
-        gclient sync                                                                    # Fetch ANGLE deps :contentReference[oaicite:8]{index=8}
+        gclient sync                                                              # fetch deps :contentReference[oaicite:9]{index=9}
         gn gen out/Android --args='
           target_os="android"
           target_cpu="arm64"
-          is_component_build=true                                                     # Build shared libs (.so) :contentReference[oaicite:9]{index=9}
+          is_component_build=true                                                 # produce .so files :contentReference[oaicite:10]{index=10}
           is_debug=false
           angle_enable_vulkan=true
         '
-        autoninja -C out/Android libEGL libGLESv2                                        # Outputs libEGL.so, libGLESv2.so :contentReference[oaicite:10]{index=10}
+        autoninja -C out/Android libEGL libGLESv2                                    # produces libEGL.so & libGLESv2.so :contentReference[oaicite:11]{index=11}
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -94,4 +96,4 @@ jobs:
         path: |
           mesa/build-android-aarch64/libvulkan_radeon.so
           angle/out/Android/libEGL.so
-          angle/out/Android/libGLESv2.so                                                # Upload all three .so files :contentReference[oaicite:11]{index=11}
+          angle/out/Android/libGLESv2.so                                            # all three shared libs :contentReference[oaicite:12]{index=12}
