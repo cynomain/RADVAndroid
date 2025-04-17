@@ -45,7 +45,21 @@ jobs:
         echo "$HOME/android-ndk-${ANDROID_NDK_VERSION}" >> $GITHUB_PATH
 
     - name: Create Meson cross-file for aarch64
-
+      run: |
+        mkdir -p ~/.config/meson
+        CONFIG=~/.config/meson/android-aarch64.ini
+        echo "[binaries]" > $CONFIG
+        echo "ar = '$HOME/android-ndk-${ANDROID_NDK_VERSION}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-ar'" >> $CONFIG
+        echo "c  = ['ccache', '$HOME/android-ndk-${ANDROID_NDK_VERSION}/toolchains/llvm/prebuilt/linux-x86_64/bin/clang', '--target=aarch64-linux-android${ANDROID_API}']" >> $CONFIG
+        echo "cpp = ['ccache', '$HOME/android-ndk-${ANDROID_NDK_VERSION}/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++', '--target=aarch64-linux-android${ANDROID_API}', '-fno-exceptions', '-static-libstdc++']" >> $CONFIG
+        echo "strip = '$HOME/android-ndk-${ANDROID_NDK_VERSION}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-strip'" >> $CONFIG
+        echo "pkg-config = ['env', 'PKG_CONFIG_LIBDIR=$HOME/android-ndk-${ANDROID_NDK_VERSION}/pkgconfig', '/usr/bin/pkg-config']" >> $CONFIG
+        echo "" >> $CONFIG
+        echo "[host_machine]" >> $CONFIG
+        echo "system = 'android'" >> $CONFIG
+        echo "cpu_family = 'aarch64'" >> $CONFIG
+        echo "cpu = 'armv8'" >> $CONFIG
+        echo "endian = 'little'" >> $CONFIG
 
     - name: Build RADV as single .so
       working-directory: mesa
