@@ -7,7 +7,7 @@ jobs:
   build:
     strategy:
       matrix:
-        arch: [ "arm32", "aarch64", "x86_64"]
+        arch: ["aarch64"]
       fail-fast: false
 
     name: "Build for ${{matrix.arch}}"
@@ -53,7 +53,7 @@ jobs:
             -Dfreedreno=disabled \
             -Dvc4=disabled \
             -Detnaviv=disabled \
-            -Dfreedreno-kgsl=true
+
           ninja -C "build-android" install
           cd ..
           envsubst <android-${{matrix.arch}} >build-crossfile
@@ -78,7 +78,6 @@ jobs:
             -Dosmesa=true \
             -Dvulkan-drivers=amd \
             -Dgallium-drivers=radeonsi,swrast,zink \
-            -Dfreedreno-kmds=kgsl,msm \
             -Dshared-glapi=false \
             -Dtools=drm-shim \
             -Dbuildtype=release
