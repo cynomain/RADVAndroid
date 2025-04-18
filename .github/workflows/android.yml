@@ -78,7 +78,7 @@ jobs:
             -Dosmesa=true \
             -Dvulkan-drivers=amd \
             -Dgallium-drivers=radeonsi,zink \
-            -Dshared-glapi=false \
+            -Dshared-glapi=disabled \
             -Dtools=drm-shim \
             -Dbuildtype=release
             
