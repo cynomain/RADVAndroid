@@ -3,7 +3,7 @@ green='\033[0;32m'
 red='\033[0;31m'
 nocolor='\033[0m'
 
-deps="meson ninja patchelf unzip curl pip flex bison zip git"
+deps="meson ninja patchelf unzip curl pip flex bison zip git amdgpu "
 workdir="$(pwd)/turnip_workdir"
 packagedir="$workdir/turnip_module"
 ndkver="android-ndk-r29"
@@ -189,7 +189,7 @@ EOF
 
 port_lib_for_adrenotool(){
 	echo "Using patchelf to match soname ..."  $'\n'
-	tree "$workdir"
+	tree "$workdir"/mesa/build-android-aarch64
 	cp "$workdir"/mesa/build-android-aarch64/src/freedreno/vulkan/libvulkan_freedreno.so "$workdir"
 	cd "$workdir"
 	patchelf --set-soname vulkan.adreno.so libvulkan_freedreno.so

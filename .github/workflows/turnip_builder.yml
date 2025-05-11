@@ -13,7 +13,7 @@ jobs:
       run: |
         sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
         sudo apt update
-        sudo apt build-dep mesa -y
+        sudo apt build-dep mesa glslang-tools libdrm-amdgpu1 -y
     
     - name: Execute build script
       run: bash ./turnip_builder.sh
