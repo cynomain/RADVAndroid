@@ -1,4 +1,4 @@
-name: Android RADV Build New
+name: New
 
 on:
   workflow_dispatch:
@@ -14,12 +14,12 @@ jobs:
       ANDROID_ARCH: arm64
 
     steps:
-      # 1. Checkout Mesa repository
-      - name: Checkout Mesa
-        uses: actions/checkout@v3
-        with:
-          repository: "Mesa3D/mesa"
-          submodules: recursive
+      # 1. Clone Mesa from GitLab
+      - name: Clone Mesa
+        run: |
+          git clone --recursive https://gitlab.freedesktop.org/mesa/mesa.git mesa
+          cd mesa
+          git submodule update --init --recursive
 
       # 2. Install dependencies
       - name: Install host tools
@@ -84,9 +84,9 @@ jobs:
           cd artifacts
           zip -q radv-android-${{ github.run_number }}.zip *
 
-      # 8. Upload Artifact
+      # 8. Upload build artifacts
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3.1.2
         with:
           name: radv-android
           path: artifacts/radv-android-*.zip
