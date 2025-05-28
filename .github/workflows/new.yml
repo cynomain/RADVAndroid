@@ -91,4 +91,3 @@ jobs:
           name: radv-android
           path: artifacts/radv-android-*.zip
           retention-days: 5
-```
