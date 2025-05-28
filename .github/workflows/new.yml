@@ -1,27 +1,28 @@
-name: Android RADV Build
+name: Android RADV Build New
 
 on:
-  workflow_dispatch:
+  workflow-dispatch:
 
 jobs:
   build-radv-android:
     name: Build RADV for Android
     runs-on: ubuntu-latest
+
     env:
       ANDROID_NDK_VERSION: r25c
       ANDROID_API_LEVEL: 24
       ANDROID_ARCH: arm64
 
     steps:
-      # 1. Checkout Mesa repository with submodules
+      # 1. Checkout Mesa repository
       - name: Checkout Mesa
         uses: actions/checkout@v3
         with:
-          repository: Mesa3D/mesa
+          repository: "Mesa3D/mesa"
           submodules: recursive
 
-      # 2. Install host dependencies and Meson
-      - name: Install dependencies
+      # 2. Install dependencies
+      - name: Install host tools
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -31,18 +32,18 @@ jobs:
             libxkbcommon-dev libexpat1-dev libxcb-present-dev
           pip3 install --user meson
 
-      # 3. Download and extract Android NDK
-      - name: Download Android NDK
+      # 3. Download Android NDK
+      - name: Download and unpack NDK
         run: |
           wget -q https://dl.google.com/android/repository/android-ndk-${{ env.ANDROID_NDK_VERSION }}-linux.zip
           unzip -q android-ndk-${{ env.ANDROID_NDK_VERSION }}-linux.zip
           echo "ANDROID_NDK_ROOT=$PWD/android-ndk-${{ env.ANDROID_NDK_VERSION }}" >> $GITHUB_ENV
           echo "PATH=$PWD/android-ndk-${{ env.ANDROID_NDK_VERSION }}/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
 
-      # 4. Generate Meson cross-file for Android
-      - name: Create Meson cross file
+      # 4. Create Meson cross-file
+      - name: Create cross-android.ini
         run: |
-          cat <<EOF > cross-android.ini
+          cat > cross-android.ini << 'EOF'
           [binaries]
           c        = 'aarch64-linux-android${ANDROID_API_LEVEL}-clang'
           cpp      = 'aarch64-linux-android${ANDROID_API_LEVEL}-clang++'
@@ -60,7 +61,7 @@ jobs:
           EOF
 
       # 5. Configure Meson build
-      - name: Configure with Meson
+      - name: Meson setup
         run: |
           meson setup build-android \
             --cross-file=cross-android.ini \
@@ -70,12 +71,12 @@ jobs:
             -Dvalgrind=false \
             --buildtype=release
 
-      # 6. Compile and install
+      # 6. Build and install
       - name: Build RADV
         run: ninja -C build-android install
 
-      # 7. Package outputs
-      - name: Package artifacts
+      # 7. Package artifacts
+      - name: Package outputs
         run: |
           mkdir -p artifacts
           cp build-android/install/lib/libvulkan_radeon.so artifacts/
@@ -83,9 +84,11 @@ jobs:
           cd artifacts
           zip -q radv-android-${{ github.run_number }}.zip *
 
-      # 8. Upload artifacts
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+      # 8. Upload Artifact
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v2
         with:
           name: radv-android
           path: artifacts/radv-android-*.zip
+          retention-days: 5
+```
