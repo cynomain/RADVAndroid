@@ -83,11 +83,3 @@ jobs:
           cp build-android/install/share/vulkan/radeon_icd.json artifacts/
           cd artifacts
           zip -q radv-android-${{ github.run_number }}.zip *
-
-      # 8. Upload build artifacts
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: radv-android
-          path: artifacts/radv-android-*.zip
-          retention-days: 5
