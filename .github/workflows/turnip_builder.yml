@@ -13,7 +13,7 @@ jobs:
       run: |
         sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
         sudo apt update
-        sudo apt build-dep mesa meson glslang libdrm -y
+        sudo apt build-dep mesa meson glslang libdrm-dev -y
     
     - name: Execute build script
       run: bash ./turnip_builder.sh
